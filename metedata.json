@@ -1,0 +1,5 @@
+{
+  "name": "MAIRE HSE Analytics Platform",
+  "description": "A professional HSE Safety Dashboard featuring Executive Overview, Risk Analysis, and Forecasting capabilities. Built with React, Tailwind CSS, and Recharts.",
+  "requestFramePermissions": []
+}
