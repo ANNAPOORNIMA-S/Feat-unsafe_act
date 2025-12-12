@@ -64,3 +64,21 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
 }
+
+// --- ML / Prediction Types ---
+
+export interface PredictionRequest {
+  vessel: string;
+  riskLevel: string;
+  targetDate: string; // ISO Date String
+}
+
+export interface PredictionResponse {
+  predictedIssueType: string; // e.g. "UNSAFE_ACT"
+  predictedCategory: string;  // e.g. "Procedures"
+  relatedTo1: string;         // e.g. "PPE"
+  relatedTo2: string;         // e.g. "Lifting"
+  predictedCount: number;     // e.g. 5
+  suggestions: string[];      // List of actionable steps
+  confidenceScore?: number;   // 0-100
+}
