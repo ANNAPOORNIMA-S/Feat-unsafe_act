@@ -30,11 +30,11 @@ export const RiskAnalysis: React.FC<Props> = ({ data }) => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <KPICard title="Open Observations" value={openObs} color="red" />
-        <KPICard title="Closed Observations" value={closedObs} color="green" />
         <KPICard title="High Risk" value={filteredData.filter(d => d.category === RiskLevel.High).length} color="red" />
         <KPICard title="Medium Risk" value={filteredData.filter(d => d.category === RiskLevel.Medium).length} color="orange" />
         <KPICard title="Low Risk" value={filteredData.filter(d => d.category === RiskLevel.Low).length} color="green" />
+        <KPICard title="Open Items" value={openObs} color="default" />
+        <KPICard title="Total" value={filteredData.length} color="blue" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -61,22 +61,23 @@ export const RiskAnalysis: React.FC<Props> = ({ data }) => {
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="lg:col-span-3 space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold text-maire-blue mb-4">Risk Distribution by Vessel</h3>
-                <CustomStackedBarChart data={riskByVessel} />
-             </div>
+        {/* Main Content Area - Stacked Single by Single */}
+        <div className="lg:col-span-3 space-y-8">
              
-             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold text-maire-blue mb-4">Top Issues (Filtered by Risk)</h3>
-                <CustomVerticalBarChart data={topIssues} height={300} />
-             </div>
-          </div>
+           {/* Chart 1 */}
+           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-maire-blue mb-4">Risk Distribution by Vessel</h3>
+              <CustomStackedBarChart data={riskByVessel} height={350} />
+           </div>
+           
+           {/* Chart 2 */}
+           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-maire-blue mb-4">Top Issues (Filtered by Risk)</h3>
+              <CustomVerticalBarChart data={topIssues} height={350} />
+           </div>
 
-          {/* Real Data Risk Heatmap */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+           {/* Real Data Risk Heatmap */}
+           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
             <h3 className="text-lg font-semibold text-maire-blue mb-4">Risk vs Consequence Heatmap Matrix</h3>
             <div className="overflow-x-auto">
               <table className="min-w-full text-center border-collapse">

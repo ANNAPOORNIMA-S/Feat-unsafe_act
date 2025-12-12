@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell, Treemap
+  LineChart, Line, PieChart, Pie, Cell, Treemap, LabelList
 } from 'recharts';
 import { ChartDataPoint } from '../types';
 
@@ -11,6 +11,7 @@ interface SimpleChartProps {
   height?: number;
   dataKey?: string;
   categoryKey?: string;
+  color?: string; // Optional single color override
 }
 
 const COLORS = ['#003A70', '#2AA4F4', '#F39C12', '#E74C3C', '#2ECC71', '#9B59B6', '#34495E'];
@@ -56,17 +57,18 @@ export const CustomVerticalBarChart: React.FC<SimpleChartProps> = ({ data, heigh
   </ResponsiveContainer>
 );
 
-export const CustomHorizontalBarChart: React.FC<SimpleChartProps> = ({ data, height = 300 }) => (
+export const CustomHorizontalBarChart: React.FC<SimpleChartProps> = ({ data, height = 300, color }) => (
   <ResponsiveContainer width="100%" height={height}>
-    <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+    <BarChart data={data} layout="vertical" margin={{ top: 5, right: 50, left: 40, bottom: 5 }}>
       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={true} stroke="#E2E8F0" />
       <XAxis type="number" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
       <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
       <Tooltip cursor={{ fill: '#F1F5F9' }} content={<CustomTooltip />} />
-      <Bar dataKey="value" fill="#003A70" radius={[0, 4, 4, 0]} barSize={20}>
-        {data.map((entry, index) => (
+      <Bar dataKey="value" fill={color || "#003A70"} radius={[0, 4, 4, 0]} barSize={30}>
+        {!color && data.map((entry, index) => (
           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
         ))}
+         <LabelList dataKey="value" position="right" style={{ fill: '#64748B', fontSize: 12, fontWeight: 'bold' }} />
       </Bar>
     </BarChart>
   </ResponsiveContainer>
@@ -76,13 +78,27 @@ export const CustomStackedBarChart: React.FC<SimpleChartProps> = ({ data, height
   <ResponsiveContainer width="100%" height={height}>
     <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-      <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
+      <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748B' }} interval={0} angle={-45} textAnchor="end" height={60} axisLine={false} tickLine={false} />
       <YAxis tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
       <Tooltip cursor={{ fill: '#F1F5F9' }} content={<CustomTooltip />} />
       <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
       <Bar dataKey="High Risk" stackId="a" fill="#E74C3C" radius={[0, 0, 0, 0]} />
       <Bar dataKey="Medium Risk" stackId="a" fill="#F39C12" radius={[0, 0, 0, 0]} />
       <Bar dataKey="Low Risk" stackId="a" fill="#2ECC71" radius={[4, 4, 0, 0]} />
+    </BarChart>
+  </ResponsiveContainer>
+);
+
+export const CustomClusteredBarChart: React.FC<SimpleChartProps> = ({ data, height = 300 }) => (
+  <ResponsiveContainer width="100%" height={height}>
+    <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+      <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748B' }} interval={0} angle={-45} textAnchor="end" height={60} axisLine={false} tickLine={false} />
+      <YAxis tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
+      <Tooltip cursor={{ fill: '#F1F5F9' }} content={<CustomTooltip />} />
+      <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+      <Bar dataKey="Unsafe Act" fill="#2AA4F4" radius={[4, 4, 0, 0]} />
+      <Bar dataKey="Unsafe Condition" fill="#F39C12" radius={[4, 4, 0, 0]} />
     </BarChart>
   </ResponsiveContainer>
 );
@@ -136,6 +152,9 @@ export const CustomDonutChart: React.FC<SimpleChartProps> = ({ data, height = 30
 const CustomizedTreemapContent = (props: any) => {
   const { root, depth, x, y, width, height, index, name, value } = props;
   
+  // Safety check for undefined name or small size
+  const label = name || '';
+  
   return (
     <g>
       <rect
@@ -164,7 +183,7 @@ const CustomizedTreemapContent = (props: any) => {
             textShadow: '0px 1px 3px rgba(0,0,0,0.5)' 
           }}
         >
-          {name.length > 15 ? name.substring(0, 15) + '...' : name}
+          {label.length > 15 ? label.substring(0, 15) + '...' : label}
         </text>
       )}
        {width > 60 && height > 30 && (

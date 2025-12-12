@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { SafetyObservation } from './types';
-import { getObservations } from './services/dataService';
 import { ExecutiveOverview } from './pages/ExecutiveOverview';
 import { RiskAnalysis } from './pages/RiskAnalysis';
 import { VesselProfile } from './pages/VesselProfile';
 import { ObserverAnalysis } from './pages/ObserverAnalysis';
 import { Forecasting } from './pages/Forecasting';
 import { Welcome } from './pages/Welcome';
+import DataUpload from './components/DataUpload';
 import { ChatWindow } from './components/ChatWindow';
 
 // SVGs for Icons
@@ -29,25 +29,35 @@ const ChatIcon = () => (
   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
 );
 
+type AppView = 'welcome' | 'upload' | 'dashboard';
+
 const App: React.FC = () => {
-  const [showWelcome, setShowWelcome] = useState(true);
+  const [currentView, setCurrentView] = useState<AppView>('welcome');
   const [activeTab, setActiveTab] = useState<'overview' | 'risk' | 'vessel' | 'observer' | 'forecasting'>('overview');
   const [data, setData] = useState<SafetyObservation[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  useEffect(() => {
-    // Load data from service
-    const loadData = async () => {
-      const observations = await getObservations();
-      setData(observations);
-    };
-    loadData();
-  }, []);
+  // Flow Handlers
+  const handleWelcomeEnter = () => {
+    setCurrentView('upload');
+  };
 
-  if (showWelcome) {
-    return <Welcome onEnter={() => setShowWelcome(false)} />;
+  const handleDataLoaded = (uploadedData: SafetyObservation[]) => {
+    setData(uploadedData);
+    setCurrentView('dashboard');
+  };
+
+  // --- Views ---
+
+  if (currentView === 'welcome') {
+    return <Welcome onEnter={handleWelcomeEnter} />;
   }
 
+  if (currentView === 'upload') {
+    return <DataUpload onDataLoaded={handleDataLoaded} />;
+  }
+
+  // Dashboard View
   return (
     <div className="flex min-h-screen bg-bg-slate text-slate-800 font-sans">
       {/* Sidebar */}
@@ -104,6 +114,12 @@ const App: React.FC = () => {
           </button>
         </nav>
         <div className="p-4 border-t border-blue-900">
+           <button 
+             onClick={() => setCurrentView('upload')}
+             className="w-full text-xs text-blue-300 hover:text-white underline text-center mb-2"
+           >
+             Upload New File
+           </button>
           <p className="text-xs text-blue-300 text-center">Version 1.2.0 (Prototype)</p>
         </div>
       </aside>

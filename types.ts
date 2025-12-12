@@ -1,3 +1,4 @@
+
 export enum RiskLevel {
   High = 'High Risk',
   Medium = 'Medium Risk',
@@ -18,7 +19,10 @@ export enum ObservationType {
 export interface SafetyObservation {
   id: string; // Report ID
   dateReported: string; // Date Reported
+  timeReported: string; // Time Reported (New)
   vessel: string; // Vessel
+  observerName: string; // Observer Name (New)
+  observerRank: string; // Observer Rank (New)
   type: string; // Type
   description: string; // Description
   outcome: string; // Outcome
@@ -27,6 +31,7 @@ export interface SafetyObservation {
   intervention: boolean; // Was intervention taken?
   mappedIssue: string; // Mapped Issue for grouping
   consequences: string; // Potential Consequences
+  observationRelatedTo1: string; // Observation Related to (Max. 2 selections) - 1
 }
 
 export interface KPI {

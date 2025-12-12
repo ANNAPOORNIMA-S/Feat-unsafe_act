@@ -17,12 +17,12 @@ const colorMap = {
 
 export const KPICard: React.FC<KPICardProps> = ({ title, value, subtext, color = 'default' }) => {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-5 border border-gray-100 flex flex-col justify-between h-32 transition-transform hover:scale-[1.02]">
-      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{title}</h3>
-      <div className={`text-3xl font-bold ${colorMap[color]}`}>
+    <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100 flex flex-col justify-between h-28 transition-transform hover:scale-[1.02]">
+      <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{title}</h3>
+      <div className={`text-3xl font-bold ${colorMap[color]} mt-1`}>
         {value}
       </div>
-      {subtext && <p className="text-xs text-gray-400">{subtext}</p>}
+      {subtext && <p className="text-xs text-gray-400 mt-1">{subtext}</p>}
     </div>
   );
 };

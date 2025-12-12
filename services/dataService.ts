@@ -1,7 +1,7 @@
 import { SafetyObservation, KPI, ChartDataPoint, FilterState, RiskLevel, Outcome } from '../types';
 import { parseCSV } from '../utils/csvParser';
 
-export const getObservations = async (): Promise<SafetyObservation[]> => {
+export const loadDemoData = async (): Promise<SafetyObservation[]> => {
   try {
     const response = await fetch('data/Unsafe-act-and-conditions_data.csv');
     if (!response.ok) {
@@ -14,6 +14,9 @@ export const getObservations = async (): Promise<SafetyObservation[]> => {
     return [];
   }
 };
+
+// Deprecated alias for backward compatibility if needed, though we will update App.tsx
+export const getObservations = loadDemoData;
 
 export const filterObservations = (data: SafetyObservation[], filters: Partial<FilterState>): SafetyObservation[] => {
   return data.filter(d => {
@@ -95,7 +98,20 @@ export const getObservationsByType = (data: SafetyObservation[]): ChartDataPoint
   data.forEach(d => {
     if(d.type) counts[d.type] = (counts[d.type] || 0) + 1;
   });
-  return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
+};
+
+export const getObservationTypesByVessel = (data: SafetyObservation[]): any[] => {
+  const vessels = Array.from(new Set(data.map(d => d.vessel).filter(Boolean)));
+  return vessels.map(v => {
+    const vData = data.filter(d => d.vessel === v);
+    return {
+      name: v,
+      'Unsafe Act': vData.filter(d => d.type === 'UNSAFE_ACT').length,
+      'Unsafe Condition': vData.filter(d => d.type === 'UNSAFE_CONDITION').length,
+      total: vData.length
+    };
+  }).sort((a, b) => b.total - a.total).slice(0, 7);
 };
 
 export const getDateList = (data: SafetyObservation[]): string[] => {
@@ -120,28 +136,99 @@ export const getDateList = (data: SafetyObservation[]): string[] => {
 
 export const getTopMappedIssues = (data: SafetyObservation[], limit = 10): ChartDataPoint[] => {
   const counts: Record<string, number> = {};
+  const displayMap: Record<string, string> = {}; 
+
   data.forEach(d => {
-      if (d.mappedIssue && d.mappedIssue !== 'Not specified' && d.mappedIssue !== 'null' && d.mappedIssue !== '') {
-          counts[d.mappedIssue] = (counts[d.mappedIssue] || 0) + 1;
+      const rawIssue = d.mappedIssue || '';
+      
+      // Simple Normalization: Trim and Lowercase only
+      // We avoid aggressive regex replacement to prevent merging distinct categories like "Type A" and "Type-A" if they are meant to be different,
+      // or "Issue (Minor)" and "Issue (Major)".
+      let normalized = rawIssue.trim().toLowerCase();
+      
+      // Normalize internal whitespace (e.g. "A  B" -> "A B")
+      normalized = normalized.replace(/\s+/g, ' ');
+
+      if (
+          !normalized ||
+          normalized === '' || 
+          normalized === 'not specified' || 
+          normalized === 'unspecified' || 
+          normalized === 'null' || 
+          normalized === 'n/a'
+      ) {
+          return;
+      }
+
+      counts[normalized] = (counts[normalized] || 0) + 1;
+
+      // Track the display name (Use the first encountered format)
+      if (!displayMap[normalized]) {
+          displayMap[normalized] = rawIssue.trim();
       }
   });
+
   return Object.entries(counts)
-    .map(([name, value]) => ({ name, value }))
+    .map(([key, value]) => ({ 
+        name: displayMap[key] || key, 
+        value 
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, limit);
+};
+
+export const getTopRelatedObservations = (data: SafetyObservation[], limit = 10): ChartDataPoint[] => {
+  const counts: Record<string, number> = {};
+  const displayMap: Record<string, string> = {}; 
+
+  data.forEach(d => {
+      const rawValue = d.observationRelatedTo1 || '';
+      
+      // Simple Normalization: Trim and Lowercase only
+      let normalized = rawValue.trim().toLowerCase();
+      normalized = normalized.replace(/\s+/g, ' ');
+      
+      if (
+          !normalized ||
+          normalized === '' || 
+          normalized === 'not specified' || 
+          normalized === 'unspecified' || 
+          normalized === 'null' || 
+          normalized === 'n/a'
+      ) {
+          return;
+      }
+
+      counts[normalized] = (counts[normalized] || 0) + 1;
+
+      if (!displayMap[normalized]) {
+          displayMap[normalized] = rawValue.trim();
+      }
+  });
+
+  return Object.entries(counts)
+    .map(([key, value]) => ({ 
+        name: displayMap[key] || key, 
+        value 
+    }))
     .sort((a, b) => b.value - a.value)
     .slice(0, limit);
 };
 
 export const getRiskByVessel = (data: SafetyObservation[]): any[] => {
   const vessels = Array.from(new Set(data.map(d => d.vessel).filter(Boolean)));
-  return vessels.map(vessel => {
+  const result = vessels.map(vessel => {
     const vData = data.filter(d => d.vessel === vessel);
     return {
       name: vessel,
       'High Risk': vData.filter(d => d.category === RiskLevel.High).length,
       'Medium Risk': vData.filter(d => d.category === RiskLevel.Medium).length,
       'Low Risk': vData.filter(d => d.category === RiskLevel.Low).length,
+      total: vData.length
     };
   });
+  // Sort descending by total number of risks
+  return result.sort((a, b) => b.total - a.total);
 };
 
 export const getHeatmapData = (data: SafetyObservation[]): any[] => {
@@ -168,5 +255,6 @@ export const getAreaOfWorkStats = (data: SafetyObservation[]): ChartDataPoint[] 
     });
     return Object.entries(counts)
         .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value);
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 7); // Return top 7 only
 };
