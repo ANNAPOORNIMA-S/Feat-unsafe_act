@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { SafetyObservation } from './types';
 import { ExecutiveOverview } from './pages/ExecutiveOverview';
@@ -5,13 +6,14 @@ import { RiskAnalysis } from './pages/RiskAnalysis';
 import { VesselProfile } from './pages/VesselProfile';
 import { ObserverAnalysis } from './pages/ObserverAnalysis';
 import { Forecasting } from './pages/Forecasting';
+import { FuturePrediction } from './pages/FuturePrediction';
 import { Welcome } from './pages/Welcome';
 import DataUpload from './components/DataUpload';
 import { ChatWindow } from './components/ChatWindow';
 
 // SVGs for Icons
 const DashboardIcon = () => (
-  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
 );
 const RiskIcon = () => (
   <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -30,10 +32,13 @@ const ChatIcon = () => (
 );
 
 type AppView = 'welcome' | 'upload' | 'dashboard';
+type Tab = 'overview' | 'risk' | 'vessel' | 'observer' | 'forecasting';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('welcome');
-  const [activeTab, setActiveTab] = useState<'overview' | 'risk' | 'vessel' | 'observer' | 'forecasting'>('overview');
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  // State to toggle the sub-view within Forecasting
+  const [showPredictionTool, setShowPredictionTool] = useState(false);
   const [data, setData] = useState<SafetyObservation[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
@@ -45,6 +50,11 @@ const App: React.FC = () => {
   const handleDataLoaded = (uploadedData: SafetyObservation[]) => {
     setData(uploadedData);
     setCurrentView('dashboard');
+  };
+
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setShowPredictionTool(false); // Reset to main view when changing tabs
   };
 
   // --- Views ---
@@ -68,7 +78,7 @@ const App: React.FC = () => {
         </div>
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <button
-            onClick={() => setActiveTab('overview')}
+            onClick={() => handleTabChange('overview')}
             className={`flex items-center w-full px-4 py-3 rounded-lg transition-all duration-200 ${
               activeTab === 'overview' ? 'bg-maire-light shadow-md' : 'hover:bg-blue-900 text-blue-100'
             }`}
@@ -77,7 +87,7 @@ const App: React.FC = () => {
             <span>Executive Overview</span>
           </button>
           <button
-            onClick={() => setActiveTab('risk')}
+            onClick={() => handleTabChange('risk')}
             className={`flex items-center w-full px-4 py-3 rounded-lg transition-all duration-200 ${
               activeTab === 'risk' ? 'bg-maire-light shadow-md' : 'hover:bg-blue-900 text-blue-100'
             }`}
@@ -86,7 +96,7 @@ const App: React.FC = () => {
             <span>Risk Analysis</span>
           </button>
           <button
-            onClick={() => setActiveTab('forecasting')}
+            onClick={() => handleTabChange('forecasting')}
             className={`flex items-center w-full px-4 py-3 rounded-lg transition-all duration-200 ${
               activeTab === 'forecasting' ? 'bg-maire-light shadow-md' : 'hover:bg-blue-900 text-blue-100'
             }`}
@@ -95,7 +105,7 @@ const App: React.FC = () => {
             <span>Forecasting</span>
           </button>
           <button
-            onClick={() => setActiveTab('vessel')}
+            onClick={() => handleTabChange('vessel')}
             className={`flex items-center w-full px-4 py-3 rounded-lg transition-all duration-200 ${
               activeTab === 'vessel' ? 'bg-maire-light shadow-md' : 'hover:bg-blue-900 text-blue-100'
             }`}
@@ -104,7 +114,7 @@ const App: React.FC = () => {
             <span>Vessel Safety Profile</span>
           </button>
           <button
-            onClick={() => setActiveTab('observer')}
+            onClick={() => handleTabChange('observer')}
             className={`flex items-center w-full px-4 py-3 rounded-lg transition-all duration-200 ${
               activeTab === 'observer' ? 'bg-maire-light shadow-md' : 'hover:bg-blue-900 text-blue-100'
             }`}
@@ -129,7 +139,14 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           {activeTab === 'overview' && <ExecutiveOverview data={data} />}
           {activeTab === 'risk' && <RiskAnalysis data={data} />}
-          {activeTab === 'forecasting' && <Forecasting data={data} />}
+          
+          {/* Forecasting Tab with Sub-Navigation */}
+          {activeTab === 'forecasting' && (
+            !showPredictionTool 
+              ? <Forecasting data={data} onNavigateToPredict={() => setShowPredictionTool(true)} />
+              : <FuturePrediction data={data} onBack={() => setShowPredictionTool(false)} />
+          )}
+
           {activeTab === 'vessel' && <VesselProfile data={data} />}
           {activeTab === 'observer' && <ObserverAnalysis data={data} />}
         </div>

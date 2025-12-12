@@ -56,12 +56,18 @@ export class ChatService {
     // Ensure that process.env.API_KEY is correctly configured in your environment.
     const apiKey = process.env.API_KEY;
     
-    if (apiKey && apiKey.trim().length > 0) {
+    // Check if key exists and is not the default placeholder from the example .env
+    if (apiKey && apiKey.trim().length > 0 && !apiKey.includes('YOUR_GOOGLE_AI_KEY')) {
       console.log("[ChatService] API Key found. Initializing AI...");
       this.ai = new GoogleGenAI({ apiKey: apiKey.trim() });
       this.initChat();
     } else {
-      console.error("[ChatService] API Key missing. Please ensure process.env.API_KEY is set.");
+      console.error("---------------------------------------------------------------");
+      console.error("[ChatService] Google AI API Key is MISSING or INVALID.");
+      console.error("1. Create a file named '.env' in your project root.");
+      console.error("2. Add this line: API_KEY=AIzaSy...");
+      console.error("3. Restart the server (npm run dev).");
+      console.error("---------------------------------------------------------------");
     }
   }
 
@@ -194,15 +200,15 @@ export class ChatService {
       // Analyze error using JSON stringification to catch nested structures reliably
       const errString = JSON.stringify(error, null, 2).toLowerCase();
       
-      // Check for hard Quota limits (429 Resource Exhausted)
+      // Check for hard Quota limits (429 Resource Exhausted) or Blocked Keys (403)
       const isQuota = errString.includes('quota') || errString.includes('resource_exhausted');
+      const isBlocked = errString.includes('403') || errString.includes('permission_denied') || errString.includes('leaked');
       
       // Check for transient Rate Limits (429 Too Many Requests)
       const isRateLimit = errString.includes('429') || errString.includes('too many requests');
 
-      if (isQuota) {
-        console.warn("[ChatService] Quota exceeded (Hard Limit). Cancelling retries.");
-        throw error; // Fail fast
+      if (isQuota || isBlocked) {
+        throw error; // Fail fast, do not retry these
       }
 
       if (retries > 0 && isRateLimit) {
@@ -216,7 +222,7 @@ export class ChatService {
 
   public async sendMessage(message: string): Promise<string> {
     if (!this.chat) {
-       return "System Error: AI Service not initialized. Please ensure the .env file exists with API_KEY set, and restart the application.";
+       return "⚠️ System Error: AI Service not initialized. \n\nPlease create a .env file in the project root with your API Key: \nAPI_KEY=AIzaSy...";
     }
 
     try {
@@ -250,15 +256,15 @@ export class ChatService {
     } catch (err: any) {
       // Robust error parsing
       const errString = JSON.stringify(err).toLowerCase();
-      const msg = (err?.message || '').toLowerCase();
       
-      // Handle Quota/Rate Limit gracefully
-      if (
-          errString.includes('429') || 
-          errString.includes('quota') || 
-          errString.includes('resource_exhausted') ||
-          msg.includes('quota')
-      ) {
+      // 1. Handle LEAKED/BLOCKED KEY (403)
+      if (errString.includes('leaked') || errString.includes('permission_denied') || errString.includes('403')) {
+        console.error("[ChatService] API Key BLOCKED/LEAKED.");
+        return "❌ **API Key Error: Leaked/Blocked**\n\nGoogle has blocked your API key because it was exposed publicly (likely on GitHub).\n\n**How to Fix:**\n1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey) and generate a **NEW** key.\n2. Update your `.env` file with the new key.\n3. **Do not** commit the `.env` file to public repositories.";
+      }
+
+      // 2. Handle QUOTA EXCEEDED (429)
+      if (errString.includes('quota') || errString.includes('resource_exhausted')) {
          console.warn("[ChatService] Quota exceeded. Returning user message.");
          return "⚠️ **System Alert: Quota Exceeded**\n\nI have reached my daily usage limit for the Gemini API. \n\n**To fix this:**\n1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey) and create a new API Key (or enable billing).\n2. Update your `.env` file with the new key.\n3. Restart the server.";
       }
