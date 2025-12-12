@@ -75,5 +75,7 @@ clf.fit(Xc, y_c)
 
 pickle.dump(clf, open("issue_model.pkl", "wb"))
 pickle.dump(enc, open("encoders.pkl", "wb"))
+# Save global weekly LR model
+pickle.dump(reg, open("global_lr.pkl", "wb"))
 
 print("Training complete. Models saved.")
