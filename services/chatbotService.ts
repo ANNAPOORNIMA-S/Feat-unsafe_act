@@ -52,27 +52,16 @@ export class ChatService {
   constructor(data: SafetyObservation[]) {
     this.data = data;
     
-    let apiKey: string | undefined;
-
-    // 1. Try Standard Vite Env Var (Best Practice)
-    if (import.meta.env && import.meta.env.VITE_API_KEY) {
-      apiKey = import.meta.env.VITE_API_KEY;
-    } 
-    // 2. Fallback to process.env for other environments
-    else {
-      try {
-        // @ts-ignore
-        apiKey = process.env.API_KEY || process.env.VITE_API_KEY;
-      } catch (e) {
-        // ignore
-      }
-    }
+    // API key must be obtained exclusively from the environment variable process.env.API_KEY.
+    // Ensure that process.env.API_KEY is correctly configured in your environment.
+    const apiKey = process.env.API_KEY;
     
-    if (apiKey) {
-      this.ai = new GoogleGenAI({ apiKey });
+    if (apiKey && apiKey.trim().length > 0) {
+      console.log("[ChatService] API Key found. Initializing AI...");
+      this.ai = new GoogleGenAI({ apiKey: apiKey.trim() });
       this.initChat();
     } else {
-      console.error("[ChatService] API Key missing. Please create a .env file with VITE_API_KEY=your_key");
+      console.error("[ChatService] API Key missing. Please ensure process.env.API_KEY is set.");
     }
   }
 
@@ -227,7 +216,7 @@ export class ChatService {
 
   public async sendMessage(message: string): Promise<string> {
     if (!this.chat) {
-       return "System Error: AI Service not initialized. Please ensure the .env file exists with VITE_API_KEY set, and restart the application.";
+       return "System Error: AI Service not initialized. Please ensure the .env file exists with API_KEY set, and restart the application.";
     }
 
     try {
@@ -271,7 +260,7 @@ export class ChatService {
           msg.includes('quota')
       ) {
          console.warn("[ChatService] Quota exceeded. Returning user message.");
-         return "⚠️ System Alert: I have reached my daily usage limit (Quota Exceeded). This typically resets daily. Please check your API plan or try again later.";
+         return "⚠️ **System Alert: Quota Exceeded**\n\nI have reached my daily usage limit for the Gemini API. \n\n**To fix this:**\n1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey) and create a new API Key (or enable billing).\n2. Update your `.env` file with the new key.\n3. Restart the server.";
       }
 
       console.error("Chat Logic Error:", err);
